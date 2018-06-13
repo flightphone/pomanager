@@ -1,0 +1,49 @@
+create function p_<%=table_name%>_edit
+(
+_<%=rows[0].column_name%> <%=rows[0].udt_name%>
+<% for (var i=1; i < rows.length; i++) {%>,_<%=rows[i].column_name%> <%=rows[i].udt_name%> DEFAULT null
+<%}%>
+ )
+ returns setof <%=table_name%>
+ as
+ $$
+ begin
+ if exists(select <%=rows[0].column_name%> from <%=table_name%> where <%=rows[0].column_name%> = _<%=rows[0].column_name%>) then
+    update <%=table_name%>
+	set 
+        <%=rows[1].column_name%> = _<%=rows[1].column_name%> 
+        <% for (var i=2; i < rows.length; i++) {%>,<%=rows[i].column_name%> = _<%=rows[i].column_name%>
+        <%}%>    
+    where	
+	    <%=rows[0].column_name%> = _<%=rows[0].column_name%>;
+ else
+	if (_<%=rows[0].column_name%> is null ) then
+		_<%=rows[0].column_name%> := <%-c_default%>;
+	end if;   
+   insert into <%=table_name%>(
+        <%=rows[0].column_name%>
+        <% for (var i=1; i < rows.length; i++) {%>,<%=rows[i].column_name%> 
+        <%}%>    
+	) 
+   values (
+        _<%=rows[0].column_name%>
+        <% for (var i=1; i < rows.length; i++) {%>,_<%=rows[i].column_name%>
+        <%}%>     
+	  );
+ end if;
+  return query select * from <%=table_name%> where <%=rows[0].column_name%> = _<%=rows[0].column_name%>;
+end;
+$$ language plpgsql;
+
+
+create function p_<%=table_name%>_del (_<%=rows[0].column_name%> <%=rows[0].udt_name%>)
+returns void
+as
+$$
+begin
+   delete from <%=table_name%> where <%=rows[0].column_name%> = _<%=rows[0].column_name%>;
+end;
+$$ language plpgsql;
+
+
+--<%=fields%>
