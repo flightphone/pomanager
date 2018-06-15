@@ -1,7 +1,7 @@
-//var { isNullOrUndefined } = require('util');
+var { isNullOrUndefined } = require('util');
 var fs = require('fs');
 var http = require('http');
-//http://www.cbr.ru//scripts/XML_daily.asp?date_req=
+
 
 
 var pool;
@@ -363,12 +363,52 @@ function fieldValue(val, typ)
   return p;
 }
 
+function getTableName(txt)
+{
+  var rg = /\[(.*?)\]/;
+  var regs = txt.match(rg);
+  var TableName = regs[1];
+  return TableName;
+}
+
+function truncateCreate(txt)
+{
+    var TableName = getTableName(txt);
+    if (!TableName)
+      return '';
+    var res = 'truncate table ' + TableName + ';\r\n';  
+    return res;
+}
+
+async function setval(txt) 
+{
+  var table_name = getTableName(txt);
+  if (!table_name)
+    return '';
+
+    var sql = "select column_name, column_default  from information_schema.columns  where table_name = $1 and ordinal_position = 1";
+    var rec = await pool.query(sql, [table_name]);
+    if (rec.rows.length == 0)
+    {
+        return '';
+    };
+    let column_name = rec.rows[0]['column_name']
+    let column_default = rec.rows[0]['column_default']
+    if (!column_default)
+        return '';
+    if (column_default.substr(0,7)!='nextval')    
+        return '';
+
+    let rg = /'(.*?)'/;
+    let regs = column_default.match(rg);
+    let serial = regs[1];    
+    let res = "select setval('" + serial + "', max("+ column_name + ")) from " + table_name + ";\r\n"
+    return res;
+}
 
 async function InsertCreate(txt)
 {
-    var rg = /\[(.*?)\]/;
-    var regs = txt.match(rg);
-    var TableName = regs[1];
+    var TableName = getTableName(txt);
     if (!TableName)
       return '';
     
@@ -399,6 +439,17 @@ async function InsertCreate(txt)
 async function createDumpSQL(sqls, res)
 {
   var resSQL = '';
+  //truncate
+  for (var i = 0; i < sqls.length; i++)
+  {
+    if (sqls[i] != '')
+    {
+      resSQL = resSQL + truncateCreate(sqls[i]);
+    }
+  }
+
+  resSQL = resSQL + '\r\n----------------------------------------------------\r\n';
+
   for (var i = 0; i < sqls.length; i++)
   {
     if (sqls[i] != '')
@@ -406,6 +457,17 @@ async function createDumpSQL(sqls, res)
       resSQL = resSQL + await InsertCreate(sqls[i]);
     }
   }
+
+  resSQL = resSQL + '\r\n----------------------------------------------------\r\n';
+
+  for (var i = 0; i < sqls.length; i++)
+  {
+    if (sqls[i] != '')
+    {
+      resSQL = resSQL + await setval(sqls[i]);
+    }
+  }
+
   fs.writeFileSync('./dump.sql', resSQL);
   res.download('./dump.sql');
 }
