@@ -1,6 +1,10 @@
+
+
+
 var { isNullOrUndefined } = require('util');
 var fs = require('fs');
 var http = require('http');
+var FolderZip = require('./folder-zip');
 
 
 
@@ -344,7 +348,29 @@ async function extrun(req, res)
 exports.runSQL = function (req, res)
 {
   extrun(req, res);
-}   
+}  
+
+function printValue(val)
+{
+  
+  if (isNullOrUndefined(val))
+    return '';
+  else
+  {  
+  var p = val.toString();
+  try
+  {
+     p = val.toUTCString();
+  }
+  catch (ex)   
+  {;}
+  p = p.replace(/ GMT(\+|\-).... \(...\)$/, '');
+  return p;
+  }
+}
+
+
+
 function fieldValue(val, typ)
 {
   if (isNullOrUndefined(val))  
@@ -482,6 +508,7 @@ exports.dump = function (req, res)
 
 exports.gettables = function (req, res)
 {
+
   var account =  req.body.account;
   var password = req.body.password;
   if (!account || !password ) 
@@ -514,4 +541,102 @@ exports.gettables = function (req, res)
 
         });
     });
+  }
+
+  
+  function setprintval(rec, row, txt)
+  {
+
+    let r = txt;
+    for (var i = 0; i < rec.fields.length; i++)
+      {
+          var valStr = printValue(rec.rows[row][rec.fields[i].name]);
+          //var re = new RegExp('\[' + rec.fields[i].name + '\]', 'g');
+          var fname = '[' + rec.fields[i].name + ']';
+          r = r.replace(fname, valStr);
+      }
+
+    return r;  
+  }
+
+
+  function printtable(rec, content)
+  {
+      //Ищем поле
+      var txtrow = '';
+      for (var i = 0; i < rec.fields.length; i++)
+      {
+          //var re = new RegExp('<table:table-row(.*?)\[' + rec.fields[i].name + '\](.*?)<\/table:table-row>', 'm');
+          re = /<table:table-row table:style-name="ro1"><table:table-cell table:style-name="ce4" office:value-type="string" calcext:value-type="string"><text:p>\[ar_name\](.*?)<\/table:table-row>/m;
+          var mt = re.exec(content);
+          if (mt)
+          {
+            txtrow = mt[0];
+            break;
+          }
+      }
+
+      if (txtrow == '')
+      return content;
+
+      var restab = '';
+      for (var i = 0; i < rec.rows.length; i ++)
+      {
+        restab = restab + setprintval (rec, i, txtrow);
+      }  
+      
+      content = content.replace(txtrow, restab);
+      return content;
+
+  }
+
+  exports.print = function (template, sqls, atachname, res)
+  {
+    
+    var temps = template.split('.');
+    var folder = './reports/' + temps[0];
+    var ext = temps[1];
+    var fcon = folder + '/content.xml';
+    var content = fs.readFileSync(fcon, 'utf-8');
+    
+    pool.query(sqls, [], (err, result) => {
+      var re = null;
+      if (result.length)
+          re = result;
+      else
+          re = [result];    
+    
+      content = setprintval(re[0], 0, content); 
+      for (var i = 1; i < re.length; i++)
+      {
+        content = printtable(re[i], content);
+      }
+
+
+       var options = {
+        excludeParentFolder: true, //Default : false. if true, the content will be zipped excluding parent folder.
+        parentFolderName: 'v1.0' //if specified, the content will be zipped, within the 'v1.0' folder
+      };
+         
+      
+      var zip = new FolderZip();
+      zip.zipFolder(folder, options, function(){
+        zip.file('content.xml', content);
+        zip.writeToResponse(res, atachname);
+        /*
+        var filename = folder + '.zip';
+        zip.writeToFileSync(filename);
+        var rstream = fs.createReadStream(filename);
+        rstream.pipe(res);
+        */
+      });
+
+    });
+    
+    
+    
+    
+    
+    //res.download('./reports/porder.ods');
+    
   }
