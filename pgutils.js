@@ -560,6 +560,32 @@ exports.gettables = function (req, res)
   }
 
 
+  function findFiled(field, content)
+  {
+    
+    let ff = '[' + field + ']';
+    let nf = content.indexOf(ff);
+    if (nf == -1)
+      return '';
+    
+    let nstart = 0;
+    let nfinish = 0;
+    let nc = 0;
+    while (nc < nf && nc != -1)
+    {
+      nstart = nc;
+      nc = content.indexOf('<table:table-row', nc + 1);  
+    }
+    if (nc ==-1)  
+      return '';
+    nfinish = content.indexOf('</table:table-row>', nf);  
+    if (nfinish == -1)
+      return '';
+    
+    nfinish = nfinish +  18;
+    let res = content.substr(nstart, nfinish - nstart);
+    return res;
+  }
   function printtable(rec, content)
   {
       //Ищем поле
@@ -567,11 +593,11 @@ exports.gettables = function (req, res)
       for (var i = 0; i < rec.fields.length; i++)
       {
           //var re = new RegExp('<table:table-row(.*?)\[' + rec.fields[i].name + '\](.*?)<\/table:table-row>', 'm');
-          re = /<table:table-row table:style-name="ro1"><table:table-cell table:style-name="ce4" office:value-type="string" calcext:value-type="string"><text:p>\[ar_name\](.*?)<\/table:table-row>/m;
-          var mt = re.exec(content);
-          if (mt)
+          //re = /<table:table-row table:style-name="ro1"><table:table-cell table:style-name="ce4" office:value-type="string" calcext:value-type="string"><text:p>\[ar_name\](.*?)<\/table:table-row>/m;
+          var mt = findFiled(rec.fields[i].name, content);
+          if (mt != '')
           {
-            txtrow = mt[0];
+            txtrow = mt;
             break;
           }
       }
