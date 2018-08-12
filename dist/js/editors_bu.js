@@ -988,26 +988,27 @@ var declare_editor = {
         {title: 'Код', field : 'iddeclare', tp: 'numeric'},
         {title: 'Название', field : 'decname'},
         {title: 'Описание', field : 'descr'},
-        {title: 'DecType', field : 'dectype', tp: 'numeric'},
-        {title: 'KeyField', field : 'keyfield'},
-        {title: 'DispField', field : 'dispfield'},
-        {title: 'DetailDeclare', field : 'keyvalue'},
+        {title: 'Тип', field : 'dectype', tp: 'numeric'},
+        {title: 'Ключевое поле', field : 'keyfield'},
+        {title: 'Отображаемое поле', field : 'dispfield'},
+        /*{title: 'DetailDeclare', field : 'keyvalue'},
         {title: 'EditForm', field : 'dispvalue'},
         {title: 'CloseBitProc', field : 'keyparamname'},
         {title: 'DispParamName', field : 'dispparamname'},
         {title: 'AddKeys', field : 'addkeys'},
-        {title: 'TableName', field : 'tablename'},
-
-        {title: 'EditProc', field : 'editproc'},
-        {title: 'DelProc', field : 'delproc'},
-        {title: 'SaveFieldList', field : 'savefieldlist'},
-        {title: 'DecSQL', field : 'decsql'},
+        */
+        {title: 'Таблица', field : 'tablename'},
+        {title: 'Запрос', field : 'decsql'},
         {title: 'Картинка', field : 'image_bmp'},
         {title: 'Колонки', field : 'col_grid',
         joinRow : {
                      finder_class: column_editor
                   }
-        }
+        },
+
+        {title: 'Функция обновления', field : 'editproc'},
+        {title: 'Функция удаления', field : 'delproc'},
+        {title: 'Список полей', field : 'savefieldlist'}
 
     ]
 };   
