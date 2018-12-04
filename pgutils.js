@@ -63,6 +63,81 @@ function parceRate(d)
 
 };
 
+exports.csvimport = async function(req, res)
+{
+  var csv = req.body.csv;
+  var rows = csv.split('\n');
+  var cols = rows[0].trim().toLowerCase();
+  var cols_list = cols.split(';');
+  var sql = "select fn_findtable($1)";
+  var rec = await pool.query(sql, [cols]);
+  var table_name = rec.rows[0]["fn_findtable"]
+  if (!table_name)
+  {
+    res.send('Таблица с указанными полями не найдена.');  
+    return;
+  }
+  
+  var numobj = {};
+  sql = "select column_name from information_schema.columns where table_name= $1 and data_type  in ('integer', 'numeric', 'real')";
+  rec = await pool.query(sql, [table_name]);
+
+  for (var i = 0; i < rec.rows.length; i++ )
+  {
+    numobj[rec.rows[i]['column_name']] = 1;
+  }
+
+  var insstr = 'insert into ' + table_name + '(' + cols.replace(/;/g, ', ') + ')';
+  var sql = '';
+  for (var i = 1; i < rows.length; i++)
+  {
+      var line = rows[i].trim();
+      var vals = line.split(';')
+      
+      if (vals.length != cols_list.length)
+         continue;
+
+      var valstr = 'values (';
+      for (var j = 0; j < vals.length; j++)
+      {
+        var vl = 'null';
+        if (vals[j]!='')
+        {
+          if (numobj[cols_list[j]] == 1)
+              vl = vals[j].replace(/\s/g, '').replace(',', '.');
+          else
+              vl = "'" + vals[j].replace(/'/g, "''") + "'";
+        }
+        if (j==0)
+          valstr = valstr + vl;
+        else
+        valstr = valstr + ", " + vl;  
+      }
+      valstr = valstr + ");";
+      sql = sql + insstr + '\n' + valstr + '\n';
+  }
+  //
+
+  //res.send(sql);
+  
+  pool.query(sql, [], (err, result) => {
+    if (!result)
+    {
+      res.send(err.message + '\n' + sql);
+    }
+    else
+    {
+      res.send("Данные добавлены в таблицу " + table_name);
+    }
+  });
+
+
+
+}
+
+
+
+
 exports.proc = function (req, res)
 {
   var table_name = req.params['table_name']
