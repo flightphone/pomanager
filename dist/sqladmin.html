@@ -7,8 +7,11 @@
 
 	<title>SQL Admin</title>
   
-    <link rel="stylesheet" type="text/css" href="easyui/theme/build.min.css">  
-    <script src ="js/core.js"></script>
+    <link rel="stylesheet" type="text/css" href="easyui/theme/easyui.css?v=7">
+    <link rel="stylesheet" type="text/css" href="easyui/theme/icon.css?v=4">
+    <link rel="stylesheet" type="text/css" href="easyui/theme/add.css?v=1">
+    <script type="text/javascript" src="easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
     <script src ="js/vue.min.js"></script>
     
     
@@ -16,7 +19,7 @@
    
 	<body>
             <a href="#" id="testA"></a>
-            <div class="easyui-layout" fit="true" >
+            <div class="easyui-layout" fit="true">
                 <div data-options="region:'north',split:false, height:40" style="padding: 5px">        
                     <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-play', plain:true"
                     onclick="runsql()">Run</a>
@@ -24,6 +27,8 @@
                     onclick="dump()">Dump</a>
                     <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-magic', plain:true"
                     onclick="proc()">Scripts</a>
+                     <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-magic', plain:true"
+                    onclick="csvimport()">CSV import</a>
                 </div>  
 
                     <div data-options="region:'west',split:true, title:'Tables'" style="width:200px;">
@@ -48,22 +53,22 @@
                 </div>
               
             
-
+			<!--		
             <div id="winlogon" class="easyui-window" title="Введите логин/пароль" style="width:400px;height:250px;padding:30px 60px;"
                 data-options="modal:true,collapsible:false,minimizable:false,maximizable:false">
             
             <div style="margin-bottom:20px">
-                <input class="easyui-textbox" type="text" value = "User" style="width:100%" name="account" id="account" data-options="label:'Логин:'"/>
+                <input class="easyui-textbox" type="text" value = "Admin" style="width:100%" name="account" id="account" data-options="label:'Логин:'"/>
             </div>
             <div style="margin-bottom:20px">
-                <input class="easyui-textbox" type="password" value = "123" style="width:100%" name="password" id="password" data-options="label:'Пароль:'"/>
+                <input class="easyui-textbox" type="password" value = "Admin" style="width:100%" name="password" id="password" data-options="label:'Пароль:'"/>
             </div>
             <div style="margin-bottom:20px">
                     <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-ok'"
                     onclick="App.init()" style="width:100%">Вход</a>
             </div>
             </div>
-        
+            -->
                 
     
         </body>
@@ -128,6 +133,34 @@ function getSelection()
 
     });
   }
+  
+  
+  
+  
+function csvimport()
+  {
+    var ta = document.getElementById('sqlstr');
+    var s = getSelection();
+    if (s=='')
+        s = ta.value;
+        
+    var form = new FormData();
+    form.append('csv', s);
+
+    fetch('/pg/csv', {
+            method: 'POST',
+            body: form
+          }).then(function(result){
+    return result.text()
+  }).then(function(mbody)
+  {
+      acr.message = mbody;       
+  }
+ );
+}
+
+
+
 
 function runsql()
   {
@@ -193,9 +226,9 @@ var App = {
   password: '',
   init : function(){
     
-    $('#winlogon').window('close'); 
-    this.account = $('#account').val();
-    this.password = $('#password').val();
+    //$('#winlogon').window('close'); 
+    this.account = 'Admin'; //$('#account').val();
+    this.password = 'aA12345678'; //$('#password').val();
 
     $('#maingrid').datagrid({
         singleSelect: true
@@ -215,7 +248,7 @@ var App = {
   }
 }
 
-//App.init();
+App.init();
     
     
     
