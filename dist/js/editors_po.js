@@ -1,9 +1,16 @@
 var po_editor = {
     __proto__ : tc_class,
+    
+    detailIdDec : 0,
+    masterField: '',
+    detailField: '',
+
     onEdit :  function (sender)
     {
-        sender.detail.SQLParams['pd_po']  = sender.record['po_pk'].toString();
-        sender.detail.DefaultValues['pd_po']  = sender.record['po_pk'].toString();
+        //sender.detail.SQLParams['pd_po']  = sender.record['po_pk'].toString();
+        //sender.detail.DefaultValues['pd_po']  = sender.record['po_pk'].toString();
+        sender.detail.SQLParams[sender.detailField]  = sender.record[sender.masterField].toString();
+        sender.detail.DefaultValues[sender.detailField]  = sender.record[sender.masterField].toString();
         sender.detail.UpdateTab(sender.detail);
     },
     
@@ -36,7 +43,8 @@ var po_editor = {
         sender.detail = Object.create(finder);
         sender.detail.absid = sender.prop('detail');
         sender.detail.editform = sender;
-        sender.detail.IdDeclare = 135;
+        //sender.detail.IdDeclare = 135;
+        sender.detail.IdDeclare = sender.detailIdDec;
         sender.detail.start();
 
     }
@@ -46,3 +54,13 @@ var porders = {
     __proto__:finder,
     editor_class : po_editor
 };    
+
+
+Poo = function()
+{
+    var res = Object.create(porders);
+    res.editor_class.detailIdDec = 135;
+    res.editor_class.masterField =  'po_pk';
+    res.editor_class.detailField =  'pd_po';
+    return res;
+}
