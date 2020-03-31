@@ -11,11 +11,11 @@ const { Pool, Client } = require('pg');
 
 
 var pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'uFlights',
-  password: 'aA12345678',
-  port: 5432,
+  user: process.env.POSTGRES_USER || 'postgres',
+  host: process.env.PGHOST || 'localhost',
+  database: process.env.POSTGRES_DB || 'pomanager',
+  password: process.env.POSTGRES_PASSWORD || 'aA12345678',
+  port: process.env.PGPORT || 5432,
 });
 
 
