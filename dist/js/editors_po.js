@@ -1,9 +1,9 @@
 var po_editor = {
     __proto__ : tc_class,
     
-    detailIdDec : 0,
-    masterField: '',
-    detailField: '',
+    detailIdDec : 135,
+    masterField: 'po_pk',
+    detailField: 'pd_po',
 
     onEdit :  function (sender)
     {
